@@ -1,0 +1,289 @@
+<!-- ACTIV MVP Dashboard + Pixel Manager + AI Assistant (Enhanced Features + showTab Fix) -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ACTIV Platform</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f9fafb;
+      margin: 0;
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+    aside {
+      background-color: #1a2b6b;
+      color: white;
+      width: 240px;
+      padding: 24px 0;
+      display: flex;
+      flex-direction: column;
+    }
+    aside h1 {
+      text-align: center;
+      margin-bottom: 32px;
+      font-size: 20px;
+      font-weight: 700;
+    }
+    aside a {
+      color: white;
+      padding: 12px 24px;
+      text-decoration: none;
+      font-weight: 600;
+      transition: background 0.3s;
+    }
+    aside a:hover, aside a.active {
+      background-color: #293d8f;
+    }
+    main {
+      flex: 1;
+      padding: 32px;
+      overflow-y: auto;
+    }
+    .tab { display: none; }
+    .tab.active { display: block; }
+    .filters, .kpi-grid, .card, table, .chat-box { margin-bottom: 24px; }
+    .filters select, .filters input {
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      margin-right: 12px;
+    }
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 16px;
+    }
+    .card {
+      background: white;
+      padding: 16px;
+      border-radius: 12px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .card h3 { margin: 0; font-size: 14px; color: #666; }
+    .card p { font-size: 22px; font-weight: 700; margin-top: 8px; }
+    .card span.trend { font-size: 18px; color: green; margin-left: 8px; }
+    table {
+      width: 100%; border-collapse: collapse;
+    }
+    th, td {
+      text-align: left; padding: 12px; border-bottom: 1px solid #eee;
+    }
+    th { background: #f1f1f1; font-weight: 600; }
+    .chart-container {
+      resize: both;
+      overflow: auto;
+      background: white;
+      padding: 20px;
+      margin-top: 20px;
+      border-radius: 12px;
+    }
+    canvas { width: 100% !important; height: auto !important; }
+    .chat-box textarea {
+      width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ccc;
+    }
+    .chat-box button {
+      background: #1a2b6b; color: white; padding: 10px 20px; border: none; border-radius: 8px; margin-top: 12px;
+      cursor: pointer;
+    }
+    .assistant-response {
+      background: #ffffff;
+      border-left: 4px solid #1a2b6b;
+      padding: 16px;
+      border-radius: 8px;
+      margin-top: 24px;
+      font-size: 15px;
+      line-height: 1.6;
+    }
+    .prompt-examples {
+      margin-bottom: 12px;
+    }
+    .prompt-examples button {
+      margin: 0 6px 6px 0;
+      padding: 6px 12px;
+      font-size: 14px;
+      border: none;
+      border-radius: 6px;
+      background-color: #e0e7ff;
+      color: #1a2b6b;
+      cursor: pointer;
+    }
+  </style>
+  <script>
+    let charts = [];
+
+    function showTab(id) {
+      document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+      document.querySelectorAll('aside a').forEach(link => link.classList.remove('active'));
+      const tabEl = document.getElementById(id);
+      const navEl = document.querySelector(`aside a[data-tab="${id}"]`);
+      if (tabEl && navEl) {
+        tabEl.classList.add('active');
+        navEl.classList.add('active');
+      }
+    }
+
+    function createDashboardCharts() {
+      const ctx1 = document.getElementById('dashboardChart1')?.getContext('2d');
+      const ctx2 = document.getElementById('dashboardChart2')?.getContext('2d');
+      if (!ctx1 || !ctx2) return;
+
+      new Chart(ctx1, {
+        type: 'bar',
+        data: {
+          labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+          datasets: [{
+            label: 'Weekly Impressions',
+            data: [300000, 450000, 420000, 480000],
+            backgroundColor: '#1a2b6b'
+          }]
+        },
+        options: {
+          plugins: {
+            title: {
+              display: true,
+              text: 'Impressions Over Time'
+            }
+          }
+        }
+      });
+
+      new Chart(ctx2, {
+        type: 'line',
+        data: {
+          labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+          datasets: [{
+            label: 'CTR (%)',
+            data: [1.4, 1.7, 1.9, 2.1],
+            borderColor: '#3e4ca1',
+            fill: false,
+            tension: 0.3
+          }]
+        },
+        options: {
+          plugins: {
+            title: {
+              display: true,
+              text: 'CTR Trends Over Time'
+            }
+          }
+        }
+      });
+    }
+
+    function handleAIResponse(text) {
+      const prompt = text || document.querySelector('#aiPrompt').value.toLowerCase();
+      const responseEl = document.querySelector('#aiResponseText');
+      if (!prompt || !responseEl) return;
+
+      charts.forEach(chart => chart.destroy());
+      charts = [];
+
+      const values = Array.from({ length: 5 }, () => Math.floor(Math.random() * 400) + 100);
+      const labels = ['18-24', '25-34', '35-44', '45-54', '55+'];
+
+      let responseText = `🔎 Here's what I found based on your query:<br><br>`;
+      responseText += `• Reach peaked in the 35–44 age range.<br>`;
+      responseText += `• CTR and completion rate trends vary by platform and age group.<br>`;
+      responseText += `• Here's a visual breakdown:`;
+
+      responseEl.innerHTML = `<div class="assistant-response">${responseText}</div>`;
+
+      const baseData = {
+        labels: labels,
+        datasets: [{
+          label: 'Reach (in thousands)',
+          data: values,
+          backgroundColor: '#1a2b6b'
+        }]
+      };
+
+      charts.push(createChart('chart1', 'bar', baseData, 'Reach by Age Group'));
+      charts.push(createChart('chart2', 'line', baseData, 'CTR Trend by Age Group'));
+      charts.push(createChart('chart3', 'pie', {
+        labels: labels,
+        datasets: [{
+          label: 'Audience Share',
+          data: values,
+          backgroundColor: ['#1a2b6b', '#3e4ca1', '#6073c6', '#8ca3e0', '#b9c7f0']
+        }]
+      }, 'Audience Distribution'));
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      createDashboardCharts();
+      showTab('dashboard');
+    });
+  </script>
+</head>
+<body>
+  <aside>
+    <h1>ACTIV</h1>
+    <a href="#" data-tab="dashboard" onclick="showTab('dashboard')">📊 Dashboard</a>
+    <a href="#" data-tab="pixels" onclick="showTab('pixels')">🧩 Pixel Manager</a>
+    <a href="#" data-tab="assistant" onclick="showTab('assistant')">🤖 AI Assistant</a>
+  </aside>
+  <main>
+    <!-- Dashboard tab content (charts and KPI cards) -->
+    <div id="dashboard" class="tab">
+      <h2>Dashboard</h2>
+      <div class="kpi-grid">
+        <div class="card"><div><h3>Impressions</h3><p>1.2M</p></div><span class="trend">▲</span></div>
+        <div class="card"><div><h3>Reach</h3><p>950K</p></div><span class="trend">▲</span></div>
+        <div class="card"><div><h3>Completion Rate</h3><p>83%</p></div><span class="trend">▼</span></div>
+        <div class="card"><div><h3>CPM</h3><p>$18.32</p></div><span class="trend">▼</span></div>
+        <div class="card"><div><h3>Spend</h3><p>$42,000</p></div><span class="trend">▲</span></div>
+        <div class="card"><div><h3>CTR</h3><p>1.95%</p></div><span class="trend">▲</span></div>
+        <div class="card"><div><h3>Conversions</h3><p>3,420</p></div><span class="trend">▲</span></div>
+        <div class="card"><div><h3>Viewability</h3><p>88%</p></div><span class="trend">▲</span></div>
+      </div>
+      <div class="chart-container"><canvas id="dashboardChart1"></canvas></div>
+      <div class="chart-container"><canvas id="dashboardChart2"></canvas></div>
+    </div>
+
+    <!-- Pixel Manager tab content -->
+    <div id="pixels" class="tab">
+      <h2>Pixel Manager</h2>
+      <form onsubmit="event.preventDefault(); alert('Pixel Generated!');">
+        <label>Campaign:</label><br><input type="text" required /><br><br>
+        <label>Platform:</label><br><select required><option value="">Select</option><option>LG</option><option>Samsung</option></select><br><br>
+        <label>Format:</label><br><select required><option value="">Select</option><option>JS</option><option>Image</option></select><br><br>
+        <button type="submit">Generate Pixel</button>
+      </form>
+      <h3>All Pixels</h3>
+      <table>
+        <tr><th>Pixel Name</th><th>Campaign</th><th>Status</th><th>Format</th><th>Created</th></tr>
+        <tr><td>Pixel_123_LG</td><td>AutoPlay Blitz</td><td>Fired</td><td>JS</td><td>2025-04-01</td></tr>
+        <tr><td>Pixel_999_Samsung</td><td>Holiday CTV Blast</td><td>Not Fired</td><td>Image</td><td>2025-04-02</td></tr>
+      </table>
+    </div>
+
+    <!-- AI Assistant tab content -->
+    <div id="assistant" class="tab">
+      <h2>AI Assistant</h2>
+      <div class="prompt-examples">
+        <button onclick="handleAIResponse('Show CTR trends by age group')">CTR by Age</button>
+        <button onclick="handleAIResponse('Compare LG vs Samsung reach')">LG vs Samsung</button>
+        <button onclick="handleAIResponse('Top converting segments')">Top Conversions</button>
+      </div>
+      <div class="chat-box">
+        <textarea id="aiPrompt" rows="4" placeholder="Ask something like 'Show CTR trends by age group'"></textarea>
+        <button onclick="handleAIResponse()">Submit</button>
+        <div id="aiResponseText"></div>
+        <div class="chart-container"><canvas id="chart1"></canvas></div>
+        <div class="chart-container"><canvas id="chart2"></canvas></div>
+        <div class="chart-container"><canvas id="chart3"></canvas></div>
+      </div>
+    </div>
+  </main>
+</body>
+</html>
