@@ -161,7 +161,7 @@
       <h2>AI Copilot</h2>
       <div class="chat-box">
         <textarea rows="4" placeholder="Ask me anything, like 'Show top campaigns by ROAS'"></textarea>
-        <button onclick="alert('AI Response loading...')">Submit</button>
+        <button onclick="renderCopilotCharts()">Submit</button>
         <div class="assistant-response">
           🔍 Copilot is ready to analyze your data and generate charts here.<br><br>
           Try queries like:
@@ -171,8 +171,19 @@
             <li>“Predict pipeline close for top 5 campaigns”</li>
           </ul>
         </div>
-        <div class="chart-container"><canvas id="copilotChart1"></canvas></div>
-        <div class="chart-container"><canvas id="copilotChart2"></canvas></div>
+      </div>
+      <div class="chart-container">
+        <h4>Top Campaign ROAS</h4>
+        <canvas id="copilotChart1"></canvas>
+      </div>
+        <div class="chart-container">
+        <h4>CTR by Platform</h4>
+        <canvas id="copilotChart2"></canvas>
+      </div>
+      <div class="chart-container">
+        <h4>Spend Breakdown by Device</h4>
+        <canvas id="copilotChart3"></canvas>
+      </div>
       </div>
     </div>
       </div>
@@ -183,6 +194,7 @@
       <div class="upload-box">
         <p>📤 Drag and drop your CSV file here</p>
         <p>or click to select from your computer</p>
+        <button style="margin-top: 12px; padding: 10px 20px; border: none; background: #1a2b6b; color: white; border-radius: 6px;">Upload</button>
       </div>
       <div class="chart-container">
         <h3>Recently Uploaded Datasets</h3>
@@ -192,14 +204,54 @@
               <th style="padding: 10px; text-align: left;">Filename</th>
               <th style="padding: 10px; text-align: left;">Rows</th>
               <th style="padding: 10px; text-align: left;">Status</th>
+              <th style="padding: 10px; text-align: left;">Mapped Columns</th>
+              <th style="padding: 10px; text-align: left;">Actions</th>
             </tr>
           </thead>
           <tbody>
-            <tr><td>campaign_log_april.csv</td><td>1,230</td><td>✅ Ingested</td></tr>
-            <tr><td>salesforce_pipeline_q1.csv</td><td>802</td><td>✅ Ingested</td></tr>
-            <tr><td>audience_traits_demo.csv</td><td>2,500</td><td>⚠️ Needs Mapping</td></tr>
+            <tr>
+              <td>campaign_log_april.csv</td><td>1,230</td><td>✅ Ingested</td>
+              <td>campaign_id, date, impressions, clicks</td>
+              <td><button style="padding: 4px 8px; border: none; background: #eee;">Preview</button></td>
+            </tr>
+            <tr>
+              <td>salesforce_pipeline_q1.csv</td><td>802</td><td>✅ Ingested</td>
+              <td>account_id, stage, revenue</td>
+              <td><button style="padding: 4px 8px; border: none; background: #eee;">Preview</button></td>
+            </tr>
+            <tr>
+              <td>audience_traits_demo.csv</td><td>2,500</td><td>⚠️ Needs Mapping</td>
+              <td>—</td>
+              <td><button style="padding: 4px 8px; border: none; background: #ffd700;">Map Fields</button></td>
+            </tr>
           </tbody>
         </table>
+      </div>
+      <div class="chart-container">
+        <h3>Schema Mapper</h3>
+        <p style="margin-bottom: 8px;">For unmapped files, assign each column to a known entity:</p>
+        <table style="width: 100%; border-collapse: collapse;">
+          <thead>
+            <tr style="background: #f0f0f0;">
+              <th style="padding: 10px; text-align: left;">CSV Column</th>
+              <th style="padding: 10px; text-align: left;">Map To</th>
+              <th style="padding: 10px; text-align: left;">AI Suggestion</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>device_id</td>
+              <td><select><option>User ID</option><option>Device ID</option><option>Account ID</option></select></td>
+              <td>Device ID</td>
+            </tr>
+            <tr>
+              <td>impr_count</td>
+              <td><select><option>Impressions</option><option>Clicks</option><option>Spend</option></select></td>
+              <td>Impressions</td>
+            </tr>
+          </tbody>
+        </table>
+        <button style="margin-top: 16px; padding: 10px 20px; background: #1a2b6b; color: white; border: none; border-radius: 6px;">Save Mapping</button>
       </div>
     </div>
     </div>
@@ -246,6 +298,49 @@
         if (link.onclick?.toString().includes(id)) link.classList.add('active');
       });
     }
-  </script>
+  function renderCopilotCharts() {
+  const ctx1 = document.getElementById('copilotChart1').getContext('2d');
+  const ctx2 = document.getElementById('copilotChart2').getContext('2d');
+  const ctx3 = document.getElementById('copilotChart3').getContext('2d');
+
+  new Chart(ctx1, {
+    type: 'bar',
+    data: {
+      labels: ['Holiday Blast', 'AutoPlay Surge', 'Prime Push', 'LG Reach', 'Samsung Boost'],
+      datasets: [{
+        label: 'ROAS',
+        data: [3.2, 2.9, 3.7, 2.1, 2.8],
+        backgroundColor: '#1a2b6b'
+      }]
+    }
+  });
+
+  new Chart(ctx2, {
+    type: 'line',
+    data: {
+      labels: ['LG', 'Samsung'],
+      datasets: [{
+        label: 'CTR (%)',
+        data: [1.8, 2.1],
+        borderColor: '#3e4ca1',
+        fill: false,
+        tension: 0.4
+      }]
+    }
+  });
+
+  new Chart(ctx3, {
+    type: 'pie',
+    data: {
+      labels: ['CTV', 'Mobile', 'Tablet'],
+      datasets: [{
+        label: 'Spend ($)',
+        data: [18000, 12000, 6000],
+        backgroundColor: ['#1a2b6b', '#5a78d1', '#a2b4f5']
+      }]
+    }
+  });
+}
+</script>
 </body>
 </html>
