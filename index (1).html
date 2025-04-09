@@ -1,45 +1,41 @@
-<!-- ACTIV MVP Dashboard + Pixel Manager + AI Assistant (Enhanced Features + showTab Fix) -->
+<!-- ACTIV Unified AI Copilot Platform (Post-PRD Update UI) -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ACTIV Platform</title>
+  <title>ACTIV AI Copilot</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    * { box-sizing: border-box; }
     body {
       font-family: 'Inter', sans-serif;
-      background-color: #f9fafb;
       margin: 0;
+      background: #f9fafb;
       display: flex;
       height: 100vh;
-      overflow: hidden;
     }
     aside {
-      background-color: #1a2b6b;
+      width: 250px;
+      background: #1a2b6b;
       color: white;
-      width: 240px;
       padding: 24px 0;
       display: flex;
       flex-direction: column;
+      height: 100vh;
     }
     aside h1 {
       text-align: center;
-      margin-bottom: 32px;
+      margin-bottom: 2rem;
       font-size: 20px;
-      font-weight: 700;
     }
     aside a {
-      color: white;
       padding: 12px 24px;
+      color: white;
       text-decoration: none;
       font-weight: 600;
-      transition: background 0.3s;
     }
     aside a:hover, aside a.active {
-      background-color: #293d8f;
+      background-color: #2d3f8f;
     }
     main {
       flex: 1;
@@ -48,242 +44,208 @@
     }
     .tab { display: none; }
     .tab.active { display: block; }
-    .filters, .kpi-grid, .card, table, .chat-box { margin-bottom: 24px; }
-    .filters select, .filters input {
+    .header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
+    .filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .filters label {
+      font-size: 14px;
+      font-weight: 500;
+    }
+    .filters input, .filters select {
       padding: 8px;
-      border: 1px solid #ccc;
       border-radius: 6px;
-      margin-right: 12px;
+      border: 1px solid #ccc;
     }
     .kpi-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
       gap: 16px;
+      margin-bottom: 24px;
     }
     .card {
       background: white;
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
+    .card h3 {
+      font-size: 14px;
+      margin: 0;
+      color: #666;
+    }
+    .card p {
+      font-size: 24px;
+      font-weight: 700;
+      margin-top: 4px;
+    }
+    .chart-container {
+      background: white;
       padding: 16px;
       border-radius: 12px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .card h3 { margin: 0; font-size: 14px; color: #666; }
-    .card p { font-size: 22px; font-weight: 700; margin-top: 8px; }
-    .card span.trend { font-size: 18px; color: green; margin-left: 8px; }
-    table {
-      width: 100%; border-collapse: collapse;
-    }
-    th, td {
-      text-align: left; padding: 12px; border-bottom: 1px solid #eee;
-    }
-    th { background: #f1f1f1; font-weight: 600; }
-    .chart-container {
-      resize: both;
-      overflow: auto;
-      background: white;
-      padding: 20px;
-      margin-top: 20px;
-      border-radius: 12px;
+      margin-bottom: 24px;
     }
     canvas { width: 100% !important; height: auto !important; }
+    .chat-box {
+      margin-top: 24px;
+    }
     .chat-box textarea {
-      width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ccc;
+      width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px;
     }
     .chat-box button {
-      background: #1a2b6b; color: white; padding: 10px 20px; border: none; border-radius: 8px; margin-top: 12px;
+      margin-top: 12px;
+      padding: 10px 20px;
+      background: #1a2b6b;
+      color: white;
+      border: none;
+      border-radius: 6px;
       cursor: pointer;
     }
     .assistant-response {
-      background: #ffffff;
-      border-left: 4px solid #1a2b6b;
-      padding: 16px;
-      border-radius: 8px;
       margin-top: 24px;
-      font-size: 15px;
-      line-height: 1.6;
+      padding: 16px;
+      background: #fff;
+      border-left: 4px solid #1a2b6b;
+      border-radius: 8px;
     }
-    .prompt-examples {
-      margin-bottom: 12px;
-    }
-    .prompt-examples button {
-      margin: 0 6px 6px 0;
-      padding: 6px 12px;
-      font-size: 14px;
-      border: none;
-      border-radius: 6px;
-      background-color: #e0e7ff;
-      color: #1a2b6b;
-      cursor: pointer;
+    .upload-box {
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      border: 2px dashed #ccc;
+      text-align: center;
+      margin-bottom: 24px;
     }
   </style>
-  <script>
-    let charts = [];
-
-    function showTab(id) {
-      document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
-      document.querySelectorAll('aside a').forEach(link => link.classList.remove('active'));
-      const tabEl = document.getElementById(id);
-      const navEl = document.querySelector(`aside a[data-tab="${id}"]`);
-      if (tabEl && navEl) {
-        tabEl.classList.add('active');
-        navEl.classList.add('active');
-      }
-    }
-
-    function createDashboardCharts() {
-      const ctx1 = document.getElementById('dashboardChart1')?.getContext('2d');
-      const ctx2 = document.getElementById('dashboardChart2')?.getContext('2d');
-      if (!ctx1 || !ctx2) return;
-
-      new Chart(ctx1, {
-        type: 'bar',
-        data: {
-          labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
-          datasets: [{
-            label: 'Weekly Impressions',
-            data: [300000, 450000, 420000, 480000],
-            backgroundColor: '#1a2b6b'
-          }]
-        },
-        options: {
-          plugins: {
-            title: {
-              display: true,
-              text: 'Impressions Over Time'
-            }
-          }
-        }
-      });
-
-      new Chart(ctx2, {
-        type: 'line',
-        data: {
-          labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
-          datasets: [{
-            label: 'CTR (%)',
-            data: [1.4, 1.7, 1.9, 2.1],
-            borderColor: '#3e4ca1',
-            fill: false,
-            tension: 0.3
-          }]
-        },
-        options: {
-          plugins: {
-            title: {
-              display: true,
-              text: 'CTR Trends Over Time'
-            }
-          }
-        }
-      });
-    }
-
-    function handleAIResponse(text) {
-      const prompt = text || document.querySelector('#aiPrompt').value.toLowerCase();
-      const responseEl = document.querySelector('#aiResponseText');
-      if (!prompt || !responseEl) return;
-
-      charts.forEach(chart => chart.destroy());
-      charts = [];
-
-      const values = Array.from({ length: 5 }, () => Math.floor(Math.random() * 400) + 100);
-      const labels = ['18-24', '25-34', '35-44', '45-54', '55+'];
-
-      let responseText = `🔎 Here's what I found based on your query:<br><br>`;
-      responseText += `• Reach peaked in the 35–44 age range.<br>`;
-      responseText += `• CTR and completion rate trends vary by platform and age group.<br>`;
-      responseText += `• Here's a visual breakdown:`;
-
-      responseEl.innerHTML = `<div class="assistant-response">${responseText}</div>`;
-
-      const baseData = {
-        labels: labels,
-        datasets: [{
-          label: 'Reach (in thousands)',
-          data: values,
-          backgroundColor: '#1a2b6b'
-        }]
-      };
-
-      charts.push(createChart('chart1', 'bar', baseData, 'Reach by Age Group'));
-      charts.push(createChart('chart2', 'line', baseData, 'CTR Trend by Age Group'));
-      charts.push(createChart('chart3', 'pie', {
-        labels: labels,
-        datasets: [{
-          label: 'Audience Share',
-          data: values,
-          backgroundColor: ['#1a2b6b', '#3e4ca1', '#6073c6', '#8ca3e0', '#b9c7f0']
-        }]
-      }, 'Audience Distribution'));
-    }
-
-    window.addEventListener('DOMContentLoaded', () => {
-      createDashboardCharts();
-      showTab('dashboard');
-    });
-  </script>
 </head>
 <body>
   <aside>
     <h1>ACTIV</h1>
-    <a href="#" data-tab="dashboard" onclick="showTab('dashboard')">📊 Dashboard</a>
-    <a href="#" data-tab="pixels" onclick="showTab('pixels')">🧩 Pixel Manager</a>
-    <a href="#" data-tab="assistant" onclick="showTab('assistant')">🤖 AI Assistant</a>
+    <a href="#" class="active" onclick="showTab('dashboard')">📊 Dashboard</a>
+    <a href="#" onclick="showTab('copilot')">🤖 AI Copilot</a>
+    <a href="#" onclick="showTab('data')">📁 Data Manager</a>
+    <a href="#" onclick="showTab('integrations')">🔌 Integrations</a>
+    <a href="#" onclick="showTab('settings')">⚙️ Settings</a>
   </aside>
   <main>
-    <!-- Dashboard tab content (charts and KPI cards) -->
-    <div id="dashboard" class="tab">
-      <h2>Dashboard</h2>
+    <div id="dashboard" class="tab active">
+      <div class="header">
+        <h2>Dashboard</h2>
+      </div>
+      <div class="filters">
+        <label>Platform:</label><select><option>All</option><option>LG</option><option>Samsung</option></select>
+        <label>Campaign:</label><input type="text" placeholder="e.g. Holiday Blast" />
+        <label>Date:</label><input type="date" />
+        <label>Device:</label><select><option>All</option><option>CTV</option><option>Mobile</option></select>
+      </div>
       <div class="kpi-grid">
-        <div class="card"><div><h3>Impressions</h3><p>1.2M</p></div><span class="trend">▲</span></div>
-        <div class="card"><div><h3>Reach</h3><p>950K</p></div><span class="trend">▲</span></div>
-        <div class="card"><div><h3>Completion Rate</h3><p>83%</p></div><span class="trend">▼</span></div>
-        <div class="card"><div><h3>CPM</h3><p>$18.32</p></div><span class="trend">▼</span></div>
-        <div class="card"><div><h3>Spend</h3><p>$42,000</p></div><span class="trend">▲</span></div>
-        <div class="card"><div><h3>CTR</h3><p>1.95%</p></div><span class="trend">▲</span></div>
-        <div class="card"><div><h3>Conversions</h3><p>3,420</p></div><span class="trend">▲</span></div>
-        <div class="card"><div><h3>Viewability</h3><p>88%</p></div><span class="trend">▲</span></div>
+        <div class="card"><h3>Impressions</h3><p>1.2M</p></div>
+        <div class="card"><h3>Spend</h3><p>$42K</p></div>
+        <div class="card"><h3>CTR</h3><p>1.95%</p></div>
+        <div class="card"><h3>Conversions</h3><p>3,420</p></div>
+        <div class="card"><h3>Pipeline</h3><p>$110K</p></div>
+        <div class="card"><h3>ROAS</h3><p>2.7x</p></div>
       </div>
       <div class="chart-container"><canvas id="dashboardChart1"></canvas></div>
       <div class="chart-container"><canvas id="dashboardChart2"></canvas></div>
     </div>
 
-    <!-- Pixel Manager tab content -->
-    <div id="pixels" class="tab">
-      <h2>Pixel Manager</h2>
-      <form onsubmit="event.preventDefault(); alert('Pixel Generated!');">
-        <label>Campaign:</label><br><input type="text" required /><br><br>
-        <label>Platform:</label><br><select required><option value="">Select</option><option>LG</option><option>Samsung</option></select><br><br>
-        <label>Format:</label><br><select required><option value="">Select</option><option>JS</option><option>Image</option></select><br><br>
-        <button type="submit">Generate Pixel</button>
-      </form>
-      <h3>All Pixels</h3>
-      <table>
-        <tr><th>Pixel Name</th><th>Campaign</th><th>Status</th><th>Format</th><th>Created</th></tr>
-        <tr><td>Pixel_123_LG</td><td>AutoPlay Blitz</td><td>Fired</td><td>JS</td><td>2025-04-01</td></tr>
-        <tr><td>Pixel_999_Samsung</td><td>Holiday CTV Blast</td><td>Not Fired</td><td>Image</td><td>2025-04-02</td></tr>
-      </table>
+    <div id="copilot" class="tab">
+      <h2>AI Copilot</h2>
+      <div class="chat-box">
+        <textarea rows="4" placeholder="Ask me anything, like 'Show top campaigns by ROAS'"></textarea>
+        <button onclick="alert('AI Response loading...')">Submit</button>
+        <div class="assistant-response">
+          🔍 Copilot is ready to analyze your data and generate charts here.<br><br>
+          Try queries like:
+          <ul>
+            <li>“Compare performance between Samsung and LG campaigns in March”</li>
+            <li>“Show CTR by age group for Q1”</li>
+            <li>“Predict pipeline close for top 5 campaigns”</li>
+          </ul>
+        </div>
+        <div class="chart-container"><canvas id="copilotChart1"></canvas></div>
+        <div class="chart-container"><canvas id="copilotChart2"></canvas></div>
+      </div>
+    </div>
+      </div>
     </div>
 
-    <!-- AI Assistant tab content -->
-    <div id="assistant" class="tab">
-      <h2>AI Assistant</h2>
-      <div class="prompt-examples">
-        <button onclick="handleAIResponse('Show CTR trends by age group')">CTR by Age</button>
-        <button onclick="handleAIResponse('Compare LG vs Samsung reach')">LG vs Samsung</button>
-        <button onclick="handleAIResponse('Top converting segments')">Top Conversions</button>
+    <div id="data" class="tab">
+      <h2>Data Manager</h2>
+      <div class="upload-box">
+        <p>📤 Drag and drop your CSV file here</p>
+        <p>or click to select from your computer</p>
       </div>
-      <div class="chat-box">
-        <textarea id="aiPrompt" rows="4" placeholder="Ask something like 'Show CTR trends by age group'"></textarea>
-        <button onclick="handleAIResponse()">Submit</button>
-        <div id="aiResponseText"></div>
-        <div class="chart-container"><canvas id="chart1"></canvas></div>
-        <div class="chart-container"><canvas id="chart2"></canvas></div>
-        <div class="chart-container"><canvas id="chart3"></canvas></div>
+      <div class="chart-container">
+        <h3>Recently Uploaded Datasets</h3>
+        <table style="width: 100%; border-collapse: collapse;">
+          <thead>
+            <tr style="background: #f0f0f0;">
+              <th style="padding: 10px; text-align: left;">Filename</th>
+              <th style="padding: 10px; text-align: left;">Rows</th>
+              <th style="padding: 10px; text-align: left;">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>campaign_log_april.csv</td><td>1,230</td><td>✅ Ingested</td></tr>
+            <tr><td>salesforce_pipeline_q1.csv</td><td>802</td><td>✅ Ingested</td></tr>
+            <tr><td>audience_traits_demo.csv</td><td>2,500</td><td>⚠️ Needs Mapping</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    </div>
+
+    <div id="integrations" class="tab">
+      <h2>Integrations</h2>
+      <p>Connect to Salesforce, Meta, Google Ads, and more...</p>
+      <div class="chart-container">
+        <h3>Connected Platforms</h3>
+        <ul>
+          <li>✅ Salesforce (Campaigns, Accounts)</li>
+          <li>✅ Meta Ads (Audience, Impressions)</li>
+          <li>🔄 Google Ads (Sync in progress)</li>
+          <li>➕ Add New Integration</li>
+        </ul>
+      </div>
+    </div>
+
+    <div id="settings" class="tab">
+      <h2>Settings</h2>
+      <p>Manage roles, access, and usage logs.</p>
+      <div class="chart-container">
+        <h3>Team Members</h3>
+        <ul>
+          <li>👤 Avichal (Admin)</li>
+          <li>👤 Juhi (Editor)</li>
+          <li>👤 Piyush (Viewer)</li>
+        </ul>
+        <h3 style="margin-top: 20px;">Usage Logs</h3>
+        <ul>
+          <li>🕒 Apr 8 - Juhi asked "Show top campaigns by ROAS"</li>
+          <li>🕒 Apr 7 - Piyush uploaded salesforce_pipeline_q1.csv</li>
+        </ul>
       </div>
     </div>
   </main>
+
+  <script>
+    function showTab(id) {
+      document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+      document.querySelector(`#${id}`).classList.add('active');
+      document.querySelectorAll('aside a').forEach(link => link.classList.remove('active'));
+      document.querySelectorAll(`aside a`).forEach(link => {
+        if (link.onclick?.toString().includes(id)) link.classList.add('active');
+      });
+    }
+  </script>
 </body>
 </html>
